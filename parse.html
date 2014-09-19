@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+	code {color: #999;}
+	</style>
+</head>
+<body>
+	<textarea name="" id="text" cols="30" rows="10">
+	##大家好！
+	今天，我们来聊一个*<严>`(he)`肃`(he)`*的*问题*！*你妹的*
+	2014-09-09 `by otarim`
+	</textarea>
+	<output id="result"></output>
+</body>
+<script>
+	
+	// var a = b = 0; b变成了全局变量！！！！
+
+
+
+	var article = document.getElementById('text').value,
+		output = document.getElementById('result');
+	var parse = (function(){
+		function init(target){
+			var todos = target.split('\n');
+			return buildHtml(todos.map(splitP));
+		}
+		// 分离段落，区分 h 以及 p
+		function splitP(todo){
+			var lastIndex;
+			todo = todo.trimLeft();
+			if(todo.indexOf('#') === 0){
+				lastIndex = todo.lastIndexOf('#');
+				return {type: 'h' + (lastIndex + 1), content: splitTag(todo.slice(lastIndex + 1))}
+			}else{
+				return {type: 'p', content: splitTag(todo)}
+			}
+		}
+
+		function splitTag(todo){
+			var begin = 0, lastIndex = 0,length = todo.length,ret = [];
+			var tag;
+			var map = {
+				'*': 'strong',
+				'`': 'code'
+			}
+			function findClosestToken(input,token,from){
+				return input.indexOf(token,from);
+			}
+			// 逐字扫描
+			while(begin < length){
+				if(map[tag = todo.charAt(begin)]){
+					ret.push({type: 'normal', content: todo.slice(lastIndex,begin)});
+					lastIndex = findClosestToken(todo,tag,begin + 1);
+					ret.push({type: map[tag], content: splitTag(todo.slice(begin + 1, lastIndex))});
+					begin = lastIndex;
+					lastIndex++;
+				}
+				begin++;
+			}
+			ret.push({type: 'normal', content: todo.slice(lastIndex, length)});
+			return ret;
+		}
+
+		function buildHtml(todo){
+			var ret = [];
+			function map(todo){
+				var ret = '';
+				function switchType(type,content){
+					content = htmlEncode(content);
+					if(type === 'normal'){
+						return content;
+					}else{
+						return '<' + type + '>' + content + '</' + type + '>';
+					}
+				}
+				function htmlEncode(s){
+				    var el = document.createElement('textarea');
+				    if('innerText' in el){
+				        el.innerText = s;
+				    }else{
+				        // ie9以下。。。存在实体标签无效
+				        el.innerHTML = s;
+				    }
+				    try{
+				        return el.innerHTML;
+				    }finally{
+				        el = null;
+				    }
+				}
+				function concat(todo){
+					var content = todo.content;
+					if(Array.isArray(content)){
+						ret += '<' + todo.type + '>';
+						content.forEach(function(item){
+							concat(item);
+						});
+						ret += '</' + todo.type + '>';
+					}else{
+						ret += switchType(todo.type,content);
+					}
+				}
+				concat(todo);
+				return ret;
+			}
+			function strToHtml(ret,todo){
+				todo.forEach(function(item){
+					ret.push(map(item));
+				})
+				return ret.join('');
+			}
+			return strToHtml(ret,todo);
+		}
+		return init;
+	})()
+	output.innerHTML = parse(article);
+</script>
+</html>

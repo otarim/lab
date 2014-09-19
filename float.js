@@ -67,8 +67,16 @@ function fix(fn,num,scale){
 	return fn(num,scale,symbol,intPart,floatPart);
 }
 
+/**
+ * 用于修正浮点数的精度问题
+ */
 
-
+/**
+ * [toFixed 四舍五入保留小数]
+ * @param  {[Number]} num
+ * @param  {[Number]} bit
+ * @return {[Number]}
+ */
 function toFixed(num,bit){
 	// 0.1234 fixed(2) --> 123.4 --> 123 0.123 
 	var pointOffset = String(num).indexOf('.'),
@@ -83,6 +91,10 @@ function toFixed(num,bit){
 	}
 	return fix(_,num,bit)
 }
+/**
+ * [add 加法]
+ * @return {[Number]}
+ */
 function add(){
 	// add(1,2,3,4.56,7.23,777)
 	var args = Array.prototype.slice.call(arguments),ret;
@@ -97,6 +109,10 @@ function add(){
 	})
 	return fix(_,ret,maxOffset);
 }
+/**
+ * [sub 减法]
+ * @return {[Number]}
+ */
 function sub(){
 	// add(1,2,3,4.56,7.23,777)
 	var args = Array.prototype.slice.call(arguments),ret;
@@ -111,6 +127,10 @@ function sub(){
 	})
 	return fix(_,ret,maxOffset);
 }
+/**
+ * [mul 乘法]
+ * @return {[Number]}
+ */
 function mul(){
 	var args = Array.prototype.slice.call(arguments),ret,totalOffset = 0;
 	forEach(args,function(item,index){
@@ -123,6 +143,10 @@ function mul(){
 	})
 	return fix(_,ret,totalOffset);
 }
+/**
+ * [mul 除法]
+ * @return {[Number]}
+ */
 function div(){
 	var args = Array.prototype.slice.call(arguments),ret;
 	ret = args.reduce(function(prev,cur){
