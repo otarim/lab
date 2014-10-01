@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Funny Gif Maker</title>
+	<link rel="stylesheet" href="../public/css/metro-bootstrap.css">
+	<style>
+	body {background: url(../public/media/misaka-imouto-toaru-kagaku-no-2803005-1280x800.jpg);}
+	.container {position: relative;}
+	.main {margin: 20px auto;}
+	.mainScreen {margin: 0 auto;width: 640px;height: 480px;display: block;box-shadow: 6px 6px 5px rgba(0,0,0,.5);border: 1px #eaeaea solid;padding: 10px;background: #fff;margin-bottom: 20px;z-index: 1001;position: relative;}
+	.side {position: absolute;width: 23%;top: 45%;right: -10%;background: #fff;padding: 10px;}
+	.output-works {/*background: rgb(239, 234, 227);*/min-height: 150px;display: none;-webkit-transition: all linear .5s;}
+	.output-works-show {display: block;height: auto;text-align: center;padding: 40px;}
+	.progress-bar .marker {position: absolute;top: 0;right: 0;width: 10px;height: 10px;background: #000;}
+	.img-thumb {display: -webkit-flex;margin-top: 40px;-webkit-flex-wrap: wrap;justify-content: center;}
+	.img-thumb .image-container {margin-right: -10px;margin-bottom: -10px;padding: 10px;background: #fff;}
+	.metro .image-container.selected {padding: 0;border-width: 10px;z-index: 1;}
+	</style>
+</head>
+<body class="metro">
+	<!-- <input type="file" accept="image/*;capture=camera"> -->
+	<div class="container span12">
+		<h1 class="fg-white text-center">Funny Gif Maker</h1>
+		<h2 class="fg-white text-center">
+			Just careful the man behind u.Is it your Boss?tell him u are debugging...
+		</h2>
+		<div class="main">
+			<video id="xx" class="mainScreen" autoplay></video>
+			<div class="main-tools text-center">
+				<button id="recode" class="large primary">iRecode</button>
+				<button id="photo" class="large success">iPhoto</button>
+				<button id="stop" class="warning">stop/play</button>
+				<button id="close" class="info">close</button>
+			</div>
+		</div>
+		<div class="side">
+			<div class="side-control">
+				<strong>Quality:</strong>
+				<div class="progress-bar"></div>
+			</div>
+			<div class="side-control">
+				<strong>Delay:</strong>
+				<div class="progress-bar"></div>
+			</div>
+			<div class="side-control">
+				<strong>Speed:</strong>
+				<div class="progress-bar"></div>
+			</div>
+		</div>
+	</div>
+	<div class="output-works bg-steel">
+		<img id="output" class="polaroid bd-white shadow">
+		<div class="img-thumb"></div>
+	</div>
+</body>
+<script src="../public/js/gif.js"></script>
+<script src="../public/js/animate.js"></script>
+<script src="../public/js/progress.js"></script>
+<script src="../public/js/common.js"></script>
+<script>
+	var progress = [{
+		max: 10,
+		min: 1,
+		value: 10,
+		className: 'bar bg-cyan',
+		callback: function(value){
+			GifMaker.quality = value;
+		}
+	},{
+		max: 1000,
+		min: 100,
+		value: 200,
+		className: 'bar bg-green',
+		callback: function(value){
+			GifMaker.delay = value;
+		}
+	},{
+		max: 1000,
+		min: 100,
+		value: 500,
+		className: 'bar bg-pink',
+		target: document.querySelectorAll('.progress-bar')[2],
+		callback: function(value){
+			GifMaker.speed = value;
+		}
+	}]
+	progress.forEach(function(key,index){
+		var obj = key;
+		obj.target =  document.querySelectorAll('.progress-bar')[index],
+		Progress(obj);
+	})
+</script>
+<script>
+var video = document.getElementById('xx');
+var outputWorks = document.querySelector('.output-works');
+var output = document.getElementById('output');
+var imgThumb = document.querySelector('.img-thumb');
+var localStream = null;
+var support = {
+	getUserMedia: navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia,
+	URL: window.URL || window.webkitURL || window.mozURL
+}
+var config = {
+	video: {
+		mandatory: {
+            minFrameRate: 15,
+            maxFrameRate: 30,
+            minWidth: 640,
+            minHeight: 480
+        }
+	}
+}
+if (support.getUserMedia && support.URL) {  
+    support.getUserMedia.call(navigator,config, function (stream) {
+    	localStream = stream;
+        video.src = support.URL.createObjectURL(stream);  
+    }, function (error) { alert(error); });  
+}
+function process(isPhotoMode){
+	var self = this;
+	if(this.lock !== true){
+		this.lock = true;
+		new Audio('../public/media/beep.wav').play();
+		video.scrollIntoView(false);
+		outputWorks.classList.remove('output-works-show');
+		GifMaker.init({
+			speed: 500,
+			delay: 200,
+			quality: 10,
+			insertTarget: imgThumb
+		},function(url){
+			OverLayer.hide(function(){
+				OverLayer.end();
+				video.play();
+				output.src = url;
+				isPhotoMode && (imgThumb._ = {
+					curElem: document.querySelector('.image-container.selected')
+				})
+				outputWorks.classList.add('output-works-show');
+				Animate(document,{
+					scrollTop: outputWorks.offsetTop
+				})
+				self.lock = false;	
+			});
+		})
+		OverLayer.show();
+		CountDown.start(3,function(){
+			// 菊花图
+			OverLayer.loading();
+			video.pause();
+			GifMaker.render(isPhotoMode);
+		});
+		record({
+			el: video
+		})
+	}
+} 
+document.getElementById('recode').onclick = function(e){
+	process.call(this);
+}
+document.getElementById('photo').onclick = function(e){
+	process.call(this,true);
+}
+document.getElementById('stop').onclick = function(){
+	if(this.stauts !== 'pause'){
+		this.stauts = 'pause';
+		video.pause();
+	}else{
+		this.stauts = 'play';
+		video.play();	
+	}
+}
+document.getElementById('close').onclick = function(){
+	// if(this.stauts !== 'close'){
+		// this.stauts = 'close';
+		video.pause(); 
+    	localStream.stop();
+	// }else{
+	// 	this.stauts = 'open';
+	// }
+}
+imgThumb.addEventListener('click',function(e){
+	var el = getTarget(e.target,function(el){
+		return el.classList.contains('image-container');
+	})
+	if(el){
+		this._.curElem && this._.curElem.classList.remove('selected');
+		el.classList.add('selected');
+		output.src = el.dataset['url'];
+		this._.curElem = el;
+	}
+})
+var makePhoto = function(video){
+	var cav = document.createElement('canvas');
+	var content = cav.getContext('2d');
+	cav.width = video.offsetWidth;
+	cav.height = video.offsetHeight;
+	content.drawImage(video,0,0);
+	return cav;
+};
+function record(config){
+	// 每隔一定间隔生成一张图，推入 queue
+	// var imgQueue = [];
+	var el = config.el;
+	var now = +new Date;
+	var Timmer = setInterval(function(){
+		if(+new Date - now > 3000){
+			clearInterval(Timmer);
+		}else{
+			// imgQueue.push(makePhoto(el))
+			GifMaker.add(makePhoto(el));			
+		}
+	},GifMaker.speed)
+}
+
+
+// var gifWorker = new Worker('makeGif.js');
+// gifWorker.onmessage = function(d){
+	// console.log(d);
+// }
+</script>
+</html>

@@ -8,14 +8,91 @@ var isArray = function(arr){
 		return Object.prototype.toString.call(arr).slice(8,-1) === 'Array';
 	}
 }
-var STANDARDMETHODS = ['pop','push','shift','unshift','slice','reverse','concat','join'];
+var ES3MEHTHODS = ['pop','push','shift','unshift','slice','reverse','concat','join'];
+var ES5POLLYFILL = ['fill','forEach','map','reduce','every','some','filter','reduceRight'];
+// 'splice','sort','indexOf','lastIndexOf'
 var ArrayProto = Array.prototype;
+var mothodHooks = {
+	// [].fill.call({length: 3}, 4) this ---> length: 3
+	fill: function(value,start,end){
+		// 空数组无法map,forEach...
+		var ret;
+		start = start || 0;
+		end = end || this.length;
+		var newArr = (function(len){
+			var ret = [];
+			for(var i = 0;i < len;i++){
+				ret.push(value);
+			}
+			return ret;
+		})(end - start) 
+		ret = this.slice(0,start).concat(newArr,this.slice(end,this.length))
+		return ret;
+	},
+	forEach: function(callback,thisArg){
+		for(var i = 0,l = this.length;i < l;i++){
+            callback.call(thisArg || null,this[i],i,this);
+        }
+	},
+	filter: function(callback,thisArg){
+		var ret = [];
+        for(var i = 0,l = this.length;i < l;i++){
+            if(callback.apply(thisArg || null,[this[i],i,this]) === true){
+                ret.push(this[i]);
+            }
+        }
+        return ret;
+	},
+	map: function(callback,thisArg){
+        var ret = [];
+        for(var i = 0,l = this.length;i < l;i++){
+            ret.push(callback.apply(thisArg || null,[this[i],i,this]));
+        }
+        return ret;
+    },
+    some: function(callback,thisArg){
+    	var ret = false;
+        for(var i = 0,l = this.length;i < l;i++){
+            if(callback.apply(thisArg || null,[this[i],i,this]) === true){
+                ret = true;
+                return ret;
+            }
+        }
+        return ret;
+    },
+    every: function(callback,thisArg){
+    	var ret = false;
+        for(var i = 0,l = this.length;i < l;i++){
+            if(callback.apply(thisArg || null,[this[i],i,this]) === true){
+                ret = true;
+                return ret;
+            }
+        }
+        return ret;
+    },
+    reduce: function(callback,thisArg){
+		var processArr = this.slice(),
+            preValue = typeof begin !== 'undefined' ? begin : processArr[0],
+            curId = typeof begin !== 'undefined' ? 0 : 1,
+            len = typeof begin !== 'undefined' ? processArr.length : processArr.length - 1,
+            curValue;
+        while(len){
+            curValue = this[curId];
+            preValue = callback.apply(processArr,[preValue,curValue,curId,this]);
+            curId++;
+            len--;
+        }
+        return preValue;
+    },
+    reduceRight: function(callback,thisArg){
+
+    }
+}
 var List = function(arr){
 	this.listSize = arr && arr.length || 0;
 	this.dataStore = arr || [];
 	this.pos = 0;	
 }
-// fill,forEach,map,reduce,every,some,filter,reduceRight,splice,sort,indexOf,lastIndexOf
 List.prototype = {
 	constructor: List,
 	append: function(el){
@@ -103,6 +180,18 @@ List.prototype = {
 		}
 		return this;
 	},
+	splice: function(){
+
+	},
+	sort: function(){
+
+	},
+	indexOf: function(){
+
+	},
+	lastIndexOf: function(){
+		
+	}
 	clear: function(){
 		// delete this.dataStore; 
 		this.dataStore = [];
@@ -143,95 +232,33 @@ List.prototype = {
 	},
 	getElem: function(){
 		return this.dataStore[this.pos];
-	},
-	forEach: function(){
-		
 	}
 }
-for(var i = 0,l = STANDARDMETHODS.length;i < l;i++){
+for(var i = 0,l = ES3MEHTHODS.length;i < l;i++){
 	(function(i){
-		List.prototype[STANDARDMETHODS[i]] = function(){
-			return ArrayProto[STANDARDMETHODS[i]].apply(this.dataStore,arguments);
+		List.prototype[ES3MEHTHODS[i]] = function(){
+			return ArrayProto[ES3MEHTHODS[i]].apply(this.dataStore,arguments);
 		}
 	})(i)
 }
-// var list = new List();
-// var el = {a:'b'};
-// list.append(el);
-// list.append(el);
-// list.append("Cynthia");
-// list.append("Raymond");
-// list.append("Barbara");
-// console.log(list.find(el));
-// console.log(list.remove('Cynthia'));
-// console.log(list.insert(el,123));
-// console.log(list.contains(el));
-// console.log(list.curPos());
-// // list.next();
-// // list.next();
-// // list.prev();
-// // list.prev();
-// console.log(list.curPos());
-// console.log(list.front());
-// console.log(list.next());
-// console.log(list.moveTo(4));
-// console.log(list.insert('otarim'));
-// list.front();
-// var len = list.length();
-// while(len--){
-// 	console.log(list.getElem());
-// 	list.next();
-// }
-// var obj1 = {
-// 	value: 123,
-// 	arr: [1,2,3],
-// 	obj: {
-// 		headers: 'xml-http-request'
-// 	}
-// }
-// var merge = function(target,source){
-// 	for(var i in source){
-// 		if(source.hasOwnProperty(i)){
-// 			if(({}).toString.call(source[i]).slice(8,-1) === 'Object' && target[i]){
-// 				target[i] = merge(target[i],source[i]);
-// 			}else if(typeof target[i] === 'undefined'){
-// 				target[i] = source[i];
-// 			}
-// 		}
-// 	}
-// 	return target;
-// }
-// var extend = function(target,source,overwrite){
-// 	var hasOwnProperty = function(el,property){
-// 		return el.hasOwnProperty(property) && typeof el[property] !== 'undefined';
-// 	}
-// 	var isObject = function(el){
-// 		return Object.prototype.toString.call(el).slice(8,-1).toLowerCase() === 'object';
-// 	}
-// 	for(var i in source){
-// 		if(source.hasOwnProperty(i)){
-// 			if(isObject(source[i]) && isObject(target[i]) && hasOwnProperty(target,i)){
-// 				target[i] = extend(target[i],source[i],overwrite);
-// 			}else{
-// 				if(hasOwnProperty(target,i)){
-// 					if(overwrite === true){
-// 						continue;
-// 					}else{
-// 						target[i] = source[i];
-// 					}
-// 				}else{
-// 					target[i] = source[i];
-// 				}	
-// 			}	
-// 		}
-// 	}
-// 	return target;
-// }
-// var a = extend({
-// 	arr: [2,3],
-// 	obj: null,
-// 	el: 'xx'
-// },obj1,true)
-// console.log(a);
-// console.log(obj1);
-console.log((new List([1,2,3,{a:2}])).toString());
+for(var i = 0,l = ES5POLLYFILL.length;i < l;i++){
+	var method = ES5POLLYFILL[i];
+	(function(method){
+		if(typeof ArrayProto[method] === 'function'){
+			List.prototype[method] = function(){
+				var args = ArrayProto.slice.call(arguments);
+				return ArrayProto[method].apply(this.dataStore, args);
+			}
+		}else{
+			List.prototype[method] = function(){
+				var args = ArrayProto.slice.call(arguments);
+				return mothodHooks[method].apply(this.dataStore,args);
+			}
+		}
+	})(method)
+}
+var list = new List([1,2,3,{a:2}]);
+console.log(list.some(function(i){
+	return i === 1
+}))
+console.log(list)
